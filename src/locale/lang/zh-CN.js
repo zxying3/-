@@ -42,5 +42,26 @@ export default {
   tree_table_page: '树状表格',
   org_tree_page: '组织结构树',
   drag_drawer_page: '可拖动抽屉',
-  tree_select_page: '树状下拉选择器'
+  tree_select_page: '树状下拉选择器',
+  product_manager: '产品管理',
+  category: '产品类型',
+  product: '产品',
+  business_manager: '商户管理',
+  lbimages: '轮播图',
+  business_list: '商户列表',
+  authen_manager: '认证管理',
+  business_authen: '商户认证',
+  agent_authen: '代理商认证',
+  spread_users: '推广用户',
+  myCenter: '个人中心',
+  my: '个人中心',
+  spread_set: '推广设置',
+  my_set: '个人',
+  people_set: '受邀人',
+  system_set: '系统设置',
+  home: '首页',
+  technology: '技术支持',
+  service: '客服中心',
+  about_us: '关于我们'
+
 }

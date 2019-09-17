@@ -1,14 +1,17 @@
 <template>
   <div class="user-avatar-dropdown">
     <Dropdown @on-click="handleClick">
-      <Badge :dot="!!messageUnreadCount">
+      <!-- <Badge :dot="!!messageUnreadCount">
         <Avatar :src="userAvatar"/>
-      </Badge>
+      </Badge>-->
+      <a>{{this.globalVariable.getUserInfo().wx_nickname}}</a>
+      <img class="headImg" :src="headImage" />
+      
       <Icon :size="18" type="md-arrow-dropdown"></Icon>
       <DropdownMenu slot="list">
-        <DropdownItem name="message">
+        <!-- <DropdownItem name="message">
           消息中心<Badge style="margin-left: 10px" :count="messageUnreadCount"></Badge>
-        </DropdownItem>
+        </DropdownItem>-->
         <DropdownItem name="logout">退出登录</DropdownItem>
       </DropdownMenu>
     </Dropdown>
@@ -16,44 +19,62 @@
 </template>
 
 <script>
-import './user.less'
-import { mapActions } from 'vuex'
+// import lunbo1 from "@/assets/images/lunbo1.png";
+import "./user.less";
+import { mapActions } from "vuex";
 export default {
-  name: 'User',
+  name: "User",
   props: {
     userAvatar: {
       type: String,
-      default: ''
+      default: ""
     },
     messageUnreadCount: {
       type: Number,
       default: 0
     }
   },
+  data() {
+    return {
+      headImage:null
+    };
+  },
   methods: {
-    ...mapActions([
-      'handleLogOut'
-    ]),
-    logout () {
+    ...mapActions(["handleLogOut"]),
+    logout() {
       this.handleLogOut().then(() => {
         this.$router.push({
-          name: 'login'
-        })
-      })
+          name: "login"
+        });
+        this.globalVariable.setUserInfo({});
+      });
     },
-    message () {
-      this.$router.push({
-        name: 'message_page'
-      })
-    },
-    handleClick (name) {
+    // logout (){
+    //   this.$router.push({
+    //       name: 'login'
+    //     })
+    // },
+    handleClick(name) {
       switch (name) {
-        case 'logout': this.logout()
-          break
-        case 'message': this.message()
-          break
+        case "logout":
+          this.logout();
+          break;
+        case "message":
+          this.message();
+          break;
       }
     }
+  },
+  created(){
+    this.headImage=this.globalVariable.getUserInfo().wx_avatarurl;
   }
-}
+};
 </script>
+<style scoped>
+  .headImg{
+    height:50px;
+    width:50px;
+    border-radius:50%;
+  }
+</style>
+

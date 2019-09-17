@@ -2,7 +2,7 @@
   <div class="error-store">
     <Badge dot :count="countComputed">
       <Button type="text" @click="openErrorLoggerPage">
-        <Icon :size="20" type="ios-bug"/>
+        <!-- <Icon :size="20" type="ios-bug"/> -->
       </Button>
     </Badge>
   </div>

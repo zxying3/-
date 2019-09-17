@@ -15,10 +15,31 @@ import '@/assets/icons/iconfont.css'
 import TreeTable from 'tree-table-vue'
 import VOrgTree from 'v-org-tree'
 import 'v-org-tree/dist/v-org-tree.css'
+
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
+// 引入全局变量文件
+import globalVariable from './api/globalVariable.js'
+
+// 引入axios
+import axios from 'axios'
+
+// var instance = axios.create({
+//   baseURL: 'http://192.168.0.108:8888/api',
+//   timeout: 5000
+// })
+var instance = axios.create({
+  baseURL: 'http://139.155.101.124:8887/api',
+  timeout: 5000,
+})
+Vue.prototype.$axios = instance
+Vue.prototype.globalVariable = globalVariable
+
 // 实际打包时应该不引入mock
 /* eslint-disable */
-if (process.env.NODE_ENV !== 'production') require('@/mock')
+// if (process.env.NODE_ENV !== 'production') require('@/mock')
 
+Vue.use(ElementUI)
 Vue.use(iView, {
   i18n: (key, value) => i18n.t(key, value)
 })

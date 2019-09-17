@@ -1,0 +1,368 @@
+<template>
+  <Card>
+    <div slot="title" style="height:30px">
+      <!-- <Icon type="md-cog"></Icon> -->
+      产品子类信息总览
+      <Button type="primary" style="float:right; margin-left:10px">导出</Button>
+      <Button type="primary" @click="handleAdd" style="float:right;margin-left:10px">新增</Button>
+      <div style="display:inline-block; float:right">
+        <i-input placeholder="请输入名称" style="width: 200px" v-model="searchValue"></i-input>
+        <i-button type="primary" style="width:50px" @click="search">搜索</i-button>
+      </div>
+    </div>
+    <!-- 新增弹窗 -->
+    <el-dialog title="新增" :visible.sync="addFormVisible" style="text-align: left">
+      <Form
+        ref="formInline"
+        label-position="right"
+        :label-width="120"
+        :model="addform"
+        :rules="ruleInline"
+      >
+        <FormItem label="名称" prop="name">
+          <Input v-model="addform.name" autocomplete="off" style="width:300px;" />
+        </FormItem>
+        <FormItem label="上级" prop="parent">
+          <Select
+            v-model="addform.parent"
+            style="width:300px;height:38px;"
+            @on-change="changeSelete($event)"
+          >
+            <Option v-for="item in parents" :value="item.id" :key="item.id">{{item.prod_name}}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="推广价" prop="price">
+          <InputNumber :min="0" v-model="addform.price" autocomplete="off" style="width:300px;" />
+        </FormItem>
+        <FormItem label="状态" prop="state">
+          <RadioGroup v-model="addform.state">
+            <Radio label="上架"></Radio>
+            <Radio label="下架" disabled></Radio>
+          </RadioGroup>
+        </FormItem>
+      </Form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addSubmit('formInline')">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- table -->
+    <el-table
+      empty-text="暂无数据"
+      :data="tableData"
+      :header-cell-style="{background:'#eef1f6',color:'#606266'}"
+      style="width: 100%"
+    >
+      <el-table-column type="selection" width="55"></el-table-column>
+      <el-table-column label="名称" align="center">
+        <template slot-scope="scope">
+          <span style="margin-left: 10px">{{ scope.row.prod_name }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="上级" align="center">
+        <template slot-scope="scope">
+          <span>{{ scope.row.parent_name }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="推广价" align="center">
+        <template slot-scope="scope">
+          <span style="margin-left: 10px">{{ scope.row.prod_money }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" align="center">
+        <template slot-scope="scope">
+          <span>{{ scope.row.status|filter }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center">
+        <template slot-scope="scope">
+          <el-button size="mini" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- table-footer -->
+    <Page
+      :total="total"
+      :current="currentPage"
+      show-total
+      show-elevator
+      @on-change="changePage"
+      style="padding-top:10px;"
+    ></Page>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog title="编辑" :visible.sync="editFormVisible" style="text-align: left">
+      <Form
+        ref="editFormInline"
+        label-position="right"
+        :label-width="120"
+        :model="editform"
+        :rules="ruleInline"
+      >
+        <FormItem label="名称" prop="name">
+          <Input v-model="editform.name" autocomplete="off" style="width:300px;" />
+        </FormItem>
+        <FormItem label="上级" prop="parent">
+          <Select
+            v-model="editform.parent"
+            style="width:300px;height:38px;"
+            @on-change="changeSelete($event)"
+          >
+            <Option v-for="item in parents" :value="item.id" :key="item.id">{{ item.prod_name }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="推广价" prop="price">
+          <InputNumber :min="0" v-model="editform.price" autocomplete="off" style="width:300px;" />
+        </FormItem>
+        <FormItem label="状态" prop="state">
+          <RadioGroup v-model="editform.state">
+            <Radio label="上架"></Radio>
+            <Radio label="下架"></Radio>
+          </RadioGroup>
+        </FormItem>
+      </Form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="editFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editSubmit('editFormInline')">确 定</el-button>
+      </div>
+    </el-dialog>
+  </Card>
+</template>
+
+<script>
+export default {
+  name: "product",
+  data() {
+    return {
+      searchValue: "",
+      total: 40,
+      currentPage: 1,
+      tableData: [],
+      parents: [],
+      ruleInline: {
+        name: [
+          { required: true, message: "产品名称不能为空", trigger: "blur" }
+        ],
+        parent: [
+          {
+            required: true,
+            type: "number",
+            message: "上级不能为空！",
+            trigger: "blur"
+          }
+        ],
+        price: [
+          {
+            required: true,
+            type: "number",
+            message: "推广价不能为空！",
+            trigger: "blur"
+          }
+        ],
+        // price: [
+        //   { required: true, message: "推广价不能为空", trigger: "blur" },
+        //   {
+        //     type: "string",
+        //     pattern: /^\d+$/,
+        //     message: "请输入数字",
+        //     trigger: "blur"
+        //   }
+        // ],
+        state: [
+          { required: true, message: "产品状态不能为空", trigger: "blur" }
+        ]
+      },
+      addFormVisible: false,
+      addform: {
+        name: "",
+        parent: "",
+        parent_id: "",
+        price: 0,
+        state: "上架"
+      },
+      editFormVisible: false,
+      editform: {
+        id: "",
+        name: "",
+        parent: "",
+        price: 0,
+        state: ""
+      }
+    };
+  },
+  filters: {
+    filter(value) {
+      if (value === 0) {
+        return (value = "下架");
+      } else if (value === 1) {
+        return (value = "上架");
+      }
+    }
+  },
+  methods: {
+    getData() {
+      this.$axios
+        .post("/sysproduct/getList", {
+          product_type: 2,
+          pageSize: 10,
+          pageNum: this.currentPage
+        })
+        .then(res => {
+          // console.log(res);
+          if (res.data.content.list !== []) {
+            this.total = res.data.content.total;
+            this.tableData = res.data.content.list;
+          }
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+    // 获取上级
+    getParent() {
+      this.$axios
+        .post("/sysproduct/getList", {
+          product_type: 1
+        })
+        .then(res => {
+          // console.log(res);
+          this.parents = res.data.content.list;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+
+    handleEdit(index, row) {
+      // console.log(index, row);
+      this.editFormVisible = true;
+      this.getParent();
+      console.log(this.parents);
+      this.editform.name = row.prod_name;
+      this.editform.price = row.prod_money;
+      this.editform.parent = row.parent_id;
+      // console.log(this.editform.parent)
+      this.editform.id = row.id;
+      if (row.status === 1) {
+        this.editform.state = "上架";
+      } else {
+        this.editform.state = "下架";
+      }
+    },
+    handleDelete(index, row) {
+      this.$Modal.confirm({
+        title: "确认要删除吗",
+        content: "",
+        onOk: () => {
+          this.$axios
+            .post("/sysproduct/deleteById", {
+              ids: row.id
+            })
+            .then(res => {
+              this.getData();
+              this.$Message.success("删除成功");
+            })
+            .catch(err => {
+              this.$Message.error("删除失败");
+            });
+        },
+        onCancel: () => {
+          // this.$Message.info("取消删除");
+        }
+      });
+    },
+    changeSelete(event) {
+      // console.log(event);
+      this.addform.parent_id = event;
+    },
+    handleAdd() {
+      this.addFormVisible = true;
+      this.addform.name = "";
+      this.addform.parent = "";
+      this.addform.price = 0;
+      // this.addform={}
+    },
+    addSubmit(name) {
+      // console.log(this.addform.parent)
+      this.addFormVisible = false;
+      this.$refs[name].validate(valid => {
+        if (valid) {
+          this.$axios
+            .post("/sysproduct/saveOne", {
+              parent_id: this.addform.parent_id,
+              prod_name: this.addform.name,
+              prod_money: this.addform.price,
+              product_type: 2
+            })
+            .then(res => {
+              this.getData();
+              this.$Message.success("已成功新增了一条数据");
+            })
+            .catch(err => {
+              this.$Message.error("新增失败");
+            });
+        } else {
+          this.addFormVisible = true;
+          this.$Message.error("请检查表单的有效性");
+        }
+      });
+    },
+    editSubmit(name) {
+      console.log(this.editform.price);
+      this.editFormVisible = false;
+      this.$refs[name].validate(valid => {
+        if (valid) {
+          this.$axios
+            .post("/sysproduct/updateById", {
+              id: this.editform.id,
+              parent_id: this.editform.parent,
+              prod_name: this.editform.name,
+              prod_money: this.editform.price,
+              status: this.editform.state === "上架" ? 1 : 0,
+              product_type: 2
+            })
+            .then(res => {
+              this.getData();
+              this.$Message.success("编辑成功");
+              this.editFormVisible = false;
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        } else {
+          this.editFormVisible = true;
+          this.$Message.error("请检查表单的有效性");
+        }
+      });
+    },
+    search() {
+      this.$axios
+        .post("/sysproduct/getList", {
+          prod_name: this.searchValue,
+          product_type: 2
+        })
+        .then(res => {
+          // console.log(this.searchValue);
+          this.total = res.data.content.total;
+          this.tableData = res.data.content.list;
+          this.searchValue = "";
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+    changePage(event) {
+      // console.log(event)
+      this.currentPage = parseInt(event) - 0;
+    }
+  },
+  created() {
+    this.getData();
+    // 获取上级
+    this.getParent();
+  }
+};
+</script>
